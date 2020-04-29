@@ -1,0 +1,45 @@
+name:                calamity-test
+version:             0.1.0.0
+github:              "nitros12/calamity-test"
+license:             BSD3
+author:              "Ben Simms"
+maintainer:          "ben@bensimms.moe"
+copyright:           "2020 Ben Simms"
+
+extra-source-files:
+- README.md
+- ChangeLog.md
+
+# Metadata used when publishing your package
+# synopsis:            Short description of your package
+# category:            Web
+
+# To avoid duplicated efforts in documentation and dealing with the
+# complications of embedding Haddock markup inside cabal files, it is
+# common to point users to the README.md file.
+description:         Please see the README on GitHub at <https://github.com/nitros12/calamity-test#readme>
+
+dependencies:
+- base >= 4.7 && < 5
+- calamity
+- polysemy
+- polysemy-plugin
+- di-polysemy
+- stm
+- lens
+- generic-lens
+- text-show
+- text
+- prometheus
+- unordered-containers
+- vector
+
+executables:
+  calamity-test-exe:
+    main:                Main.hs
+    source-dirs:         app
+    ghc-options:
+    - -fplugin=Polysemy.Plugin
+    - -threaded
+    - -rtsopts
+    - -with-rtsopts=-N
