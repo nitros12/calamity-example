@@ -150,6 +150,8 @@ handleFailByPrinting m = do
 info = DiP.info @Text
 debug = DiP.info @Text
 
+tellt = tell @_ @Text
+
 main :: IO ()
 main = do
   token <- view packed <$> getEnv "BOT_TOKEN"
@@ -158,10 +160,10 @@ main = do
       when (msg ^. #content == "!count") $ replicateM_ 3 $ do
         val <- getCounter
         info $ "the counter is: " <> showt val
-        void . invokeRequest $ CreateMessage (msg ^. #channelID) ("The value is: " <> showt val)
+        void $ tellt msg ("The value is: " <> showt val)
       when (msg ^. #content == "!say hi") $ replicateM_ 3 . P.async $ do
         info "saying heya"
-        Right msg' <- invokeRequest $ CreateMessage (msg ^. #channelID) "heya"
+        Right msg' <- tellt msg "heya"
         info "sleeping"
         P.embed $ threadDelay (5 * 1000 * 1000)
         info "slept"
@@ -171,5 +173,5 @@ main = do
         Just x <- pure Nothing
         debug "unreachable!"
       when (msg ^. #content == "!bye") $ do
-        void . invokeRequest $ CreateMessage (msg ^. #channelID) "bye!"
+        void $ tellt msg "bye!"
         stopBot
