@@ -156,7 +156,7 @@ main :: IO ()
 main = do
   token <- view packed <$> getEnv "BOT_TOKEN"
   P.runFinal . P.embedToFinal . handleFailByPrinting . runCounterAtomic . runCacheInMemory . runMetricsPrometheusIO
-    $ runBotIO (BotToken token) $ react @"messagecreate" $ \msg -> handleFailByLogging $ do
+    $ runBotIO (BotToken token) $ react @'MessageCreateEvt $ \msg -> handleFailByLogging $ do
       when (msg ^. #content == "!count") $ replicateM_ 3 $ do
         val <- getCounter
         info $ "the counter is: " <> showt val

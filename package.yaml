@@ -39,7 +39,8 @@ executables:
     main:                Main.hs
     source-dirs:         app
     ghc-options:
-    - -fplugin=Polysemy.Plugin
-    - -threaded
-    - -rtsopts
-    - -with-rtsopts=-N
+      - -O0
+      - -fplugin=Polysemy.Plugin
+      - -threaded
+      - -rtsopts
+      - -with-rtsopts=-N

@@ -1,10 +1,10 @@
 cabal-version: 1.12
 
--- This file has been generated from package.yaml by hpack version 0.31.2.
+-- This file has been generated from package.yaml by hpack version 0.33.0.
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 99586761549c69093e42e00827af90aee1c97129557eb1c8559ab176b3111135
+-- hash: 96e210039753137012fc031452008a2d3e0a1bb35f56c509a89142508a2469e2
 
 name:           calamity-test
 version:        0.1.0.0
@@ -31,7 +31,7 @@ executable calamity-test-exe
       Paths_calamity_test
   hs-source-dirs:
       app
-  ghc-options: -fplugin=Polysemy.Plugin -threaded -rtsopts -with-rtsopts=-N
+  ghc-options: -O0 -fplugin=Polysemy.Plugin -threaded -rtsopts -with-rtsopts=-N
   build-depends:
       base >=4.7 && <5
     , calamity

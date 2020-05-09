@@ -96,16 +96,16 @@ packages:
   original:
     hackage: prometheus-2.1.3@sha256:4fdf8602f7c74367cda182cf71dab108f78a86993b428bf96b61dd6c519b6f22,4296
 - completed:
-    size: 54505
-    url: https://github.com/nitros12/calamity/archive/ced8e48d6c00d307d35422b48fc15fba76d8519f.tar.gz
+    size: 55231
+    url: https://github.com/nitros12/calamity/archive/cad567dcc0266916474cf5c07ee5d901a110a6bc.tar.gz
     name: calamity
-    version: 0.1.5.1
-    sha256: fe8f05d1655d06d068dcccb1860d78d58941d08f7e4e9fcbfd30fbb420ccf886
+    version: 0.1.6.0
+    sha256: d43737c777980e906e33f6697c3ce0b6c5cdc63edcad1d907df75c9788aa23da
     pantry-tree:
-      size: 6539
-      sha256: 9ec0301a116bc72dbd01f9d212233da226dd8a5591cb1ebc2ff7b053c3ff1d29
+      size: 6540
+      sha256: 635db2edadc2a5897e8f37837bd8542b66538e35f7c9cefe047194897ef2d62a
   original:
-    url: https://github.com/nitros12/calamity/archive/ced8e48d6c00d307d35422b48fc15fba76d8519f.tar.gz
+    url: https://github.com/nitros12/calamity/archive/cad567dcc0266916474cf5c07ee5d901a110a6bc.tar.gz
 snapshots:
 - completed:
     size: 493124
