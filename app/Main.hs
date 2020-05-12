@@ -150,18 +150,20 @@ handleFailByPrinting m = do
 info = DiP.info @Text
 debug = DiP.info @Text
 
+tellt :: (BotC r, Tellable t) => t -> Text -> P.Sem r (Either RestError Message)
 tellt = tell @Text
 
 main :: IO ()
 main = do
   token <- view packed <$> getEnv "BOT_TOKEN"
   P.runFinal . P.embedToFinal . handleFailByPrinting . runCounterAtomic . runCacheInMemory . runMetricsPrometheusIO
-    $ runBotIO (BotToken token) $ react @'MessageCreateEvt $ \msg -> handleFailByLogging $ do
-      when (msg ^. #content == "!count") $ replicateM_ 3 $ do
+    $ runBotIO (BotToken token) $ do
+    react @'MessageCreateEvt $ \msg -> handleFailByLogging $ case msg ^. #content of
+      "!count" -> replicateM_ 3 $ do
         val <- getCounter
         info $ "the counter is: " <> showt val
         void $ tellt msg ("The value is: " <> showt val)
-      when (msg ^. #content == "!say hi") $ replicateM_ 3 . P.async $ do
+      "!say hi" -> replicateM_ 3 . P.async $ do
         info "saying heya"
         Right msg' <- tellt msg "heya"
         info "sleeping"
@@ -169,9 +171,12 @@ main = do
         info "slept"
         void . invoke $ EditMessage (msg ^. #channelID) msg' (Just "lol") Nothing
         info "edited"
-      when (msg ^. #content == "!explode") $ do
+      "!explode" -> do
         Just x <- pure Nothing
         debug "unreachable!"
-      when (msg ^. #content == "!bye") $ do
+      "!bye" -> do
         void $ tellt msg "bye!"
         stopBot
+      "!fire-evt" -> fire $ customEvt @"my-event" ("aha" :: Text, msg)
+    react @('CustomEvt "my-event" (Text, Message)) $ \(s, m) ->
+      void $ tellt m ("Somebody told me to tell you about: " <> s)
