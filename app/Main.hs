@@ -62,7 +62,7 @@ data CounterEff m a where
 
 P.makeSem ''CounterEff
 
-runCounterAtomic :: P.Member (P.Embed IO) r => P.Sem (CounterEff ': r) () -> P.Sem r ()
+runCounterAtomic :: P.Member (P.Embed IO) r => P.Sem (CounterEff ': r) a -> P.Sem r a
 runCounterAtomic m = do
   var <- P.embed $ newIORef (0 :: Int)
   P.runAtomicStateIORef var $ P.reinterpret (\case
@@ -141,12 +141,6 @@ handleFailByLogging m = do
     Left e -> DiP.error (e ^. packed)
     _      -> pure ()
 
-handleFailByPrinting m = do
-  r <- P.runFail m
-  case r of
-    Left e -> P.embed $ print (show e)
-    _      -> pure ()
-
 info = DiP.info @Text
 debug = DiP.info @Text
 
@@ -156,7 +150,7 @@ tellt = tell @Text
 main :: IO ()
 main = do
   token <- view packed <$> getEnv "BOT_TOKEN"
-  P.runFinal . P.embedToFinal . handleFailByPrinting . runCounterAtomic . runCacheInMemory . runMetricsPrometheusIO
+  void . P.runFinal . P.embedToFinal . runCounterAtomic . runCacheInMemory . runMetricsPrometheusIO
     $ runBotIO (BotToken token) $ do
     react @'MessageCreateEvt $ \msg -> handleFailByLogging $ case msg ^. #content of
       "!count" -> replicateM_ 3 $ do
@@ -178,5 +172,10 @@ main = do
         void $ tellt msg "bye!"
         stopBot
       "!fire-evt" -> fire $ customEvt @"my-event" ("aha" :: Text, msg)
+      "!wait" -> do
+        void $ tellt msg "waiting for !continue"
+        waitUntil @'MessageCreateEvt (\msg -> (debug $ "got message: " <> showt msg) >> (pure $ msg ^. #content == "!continue"))
+        void $ tellt msg "got !continue"
+      _ -> pure ()
     react @('CustomEvt "my-event" (Text, Message)) $ \(s, m) ->
       void $ tellt m ("Somebody told me to tell you about: " <> s)
