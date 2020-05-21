@@ -19,6 +19,8 @@
 module Main where
 
 import           Calamity
+import           Calamity.Commands
+import           Calamity.Commands.Error
 import           Calamity.Cache.InMemory
 import           Calamity.Metrics.Eff
 import           Calamity.Metrics.Internal
@@ -32,6 +34,7 @@ import           Control.Monad
 import           Data.HashMap.Lazy                          as LH
 import           Data.IORef
 import           Data.Text                                  ( Text )
+import qualified Data.Text.Lazy                             as L
 import           Data.Text.Lazy.Lens
 import qualified Data.Vector                                as V
 
@@ -141,7 +144,8 @@ handleFailByLogging m = do
     Left e -> DiP.error (e ^. packed)
     _      -> pure ()
 
-info = DiP.info @Text
+info, debug :: BotC r => Text -> P.Sem r ()
+info = DiP.info
 debug = DiP.info @Text
 
 tellt :: (BotC r, Tellable t) => t -> Text -> P.Sem r (Either RestError Message)
@@ -150,8 +154,13 @@ tellt = tell @Text
 main :: IO ()
 main = do
   token <- view packed <$> getEnv "BOT_TOKEN"
-  void . P.runFinal . P.embedToFinal . runCounterAtomic . runCacheInMemory . runMetricsPrometheusIO
+  void . P.runFinal . P.embedToFinal . runCounterAtomic . runCacheInMemory . runMetricsPrometheusIO . useConstantPrefix "!"
     $ runBotIO (BotToken token) $ do
+    addCommands $ do
+      command @'[L.Text, Snowflake User] "test" $ \ctx something aUser -> do
+        info $ "something = " <> showt something <> ", aUser = " <> showt aUser
+      command @'[] "hello" $ \ctx -> do
+        void $ tellt (coerceSnowflake @Channel @DMChannel $ getID @Channel (ctx ^. #channel)) "heya"
     react @'MessageCreateEvt $ \msg -> handleFailByLogging $ case msg ^. #content of
       "!count" -> replicateM_ 3 $ do
         val <- getCounter
@@ -177,5 +186,7 @@ main = do
         waitUntil @'MessageCreateEvt (\msg -> (debug $ "got message: " <> showt msg) >> (pure $ msg ^. #content == "!continue"))
         void $ tellt msg "got !continue"
       _ -> pure ()
+    react @('CustomEvt "command-error" CommandError) $ \e ->
+      info $ "Command failed with reason: " <> showt e
     react @('CustomEvt "my-event" (Text, Message)) $ \(s, m) ->
       void $ tellt m ("Somebody told me to tell you about: " <> s)
