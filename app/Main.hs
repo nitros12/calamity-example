@@ -19,9 +19,10 @@
 module Main where
 
 import           Calamity
-import           Calamity.Commands
-import           Calamity.Commands.Error
 import           Calamity.Cache.InMemory
+import           Calamity.Commands
+import qualified Calamity.Commands.Context                  as CommandContext
+import           Calamity.Commands.Error
 import           Calamity.Metrics.Eff
 import           Calamity.Metrics.Internal
 import           Calamity.Metrics.Noop
@@ -146,10 +147,10 @@ handleFailByLogging m = do
 
 info, debug :: BotC r => Text -> P.Sem r ()
 info = DiP.info
-debug = DiP.info @Text
+debug = DiP.info
 
-tellt :: (BotC r, Tellable t) => t -> Text -> P.Sem r (Either RestError Message)
-tellt = tell @Text
+tellt :: (BotC r, Tellable t) => t -> L.Text -> P.Sem r (Either RestError Message)
+tellt t m = tell t $ L.toStrict m
 
 main :: IO ()
 main = do
@@ -160,12 +161,29 @@ main = do
       command @'[L.Text, Snowflake User] "test" $ \ctx something aUser -> do
         info $ "something = " <> showt something <> ", aUser = " <> showt aUser
       command @'[] "hello" $ \ctx -> do
-        void $ tellt (coerceSnowflake @Channel @DMChannel $ getID @Channel (ctx ^. #channel)) "heya"
+        void $ tellt ctx "heya"
+      group "testgroup" $ do
+        command @'[[L.Text]] "test" $ \ctx l -> do
+          void $ tellt ctx ("you sent: " <> showtl l)
+        command @'[] "count" $ \ctx -> do
+          val <- getCounter
+          void $ tellt ctx ("The value is: " <> showtl val)
+        group "say" $ do
+          command @'[KleeneConcat L.Text] "this" $ \ctx msg -> do
+            void $ tellt ctx msg
+      command @'[] "explode" $ \ctx -> do
+        Just x <- pure Nothing
+        debug "unreachable!"
+      command @'[] "bye" $ \ctx -> do
+        void $ tellt ctx "bye!"
+        stopBot
+      command @'[] "fire-evt" $ \ctx -> do
+        fire $ customEvt @"my-event" ("aha" :: L.Text, ctx ^. #message)
+      command @'[L.Text] "wait-for" $ \ctx s -> do
+        void $ tellt ctx ("waiting for !" <> s)
+        waitUntil @'MessageCreateEvt (\msg -> msg ^. #content == ("!" <> s))
+        void $ tellt ctx ("got !" <> s)
     react @'MessageCreateEvt $ \msg -> handleFailByLogging $ case msg ^. #content of
-      "!count" -> replicateM_ 3 $ do
-        val <- getCounter
-        info $ "the counter is: " <> showt val
-        void $ tellt msg ("The value is: " <> showt val)
       "!say hi" -> replicateM_ 3 . P.async $ do
         info "saying heya"
         Right msg' <- tellt msg "heya"
@@ -174,19 +192,10 @@ main = do
         info "slept"
         void . invoke $ EditMessage (msg ^. #channelID) msg' (Just "lol") Nothing
         info "edited"
-      "!explode" -> do
-        Just x <- pure Nothing
-        debug "unreachable!"
-      "!bye" -> do
-        void $ tellt msg "bye!"
-        stopBot
-      "!fire-evt" -> fire $ customEvt @"my-event" ("aha" :: Text, msg)
-      "!wait" -> do
-        void $ tellt msg "waiting for !continue"
-        waitUntil @'MessageCreateEvt (\msg -> (debug $ "got message: " <> showt msg) >> (pure $ msg ^. #content == "!continue"))
-        void $ tellt msg "got !continue"
       _ -> pure ()
-    react @('CustomEvt "command-error" CommandError) $ \e ->
+    react @('CustomEvt "command-error" (CommandContext.Context, CommandError)) $ \(ctx, e) -> do
       info $ "Command failed with reason: " <> showt e
-    react @('CustomEvt "my-event" (Text, Message)) $ \(s, m) ->
+      case e of
+        ParseError t r -> void . tellt ctx $ "Failed to parse parameter: " <> L.fromStrict t <> ", with reason: ```\n" <> r <> "```"
+    react @('CustomEvt "my-event" (L.Text, Message)) $ \(s, m) ->
       void $ tellt m ("Somebody told me to tell you about: " <> s)
