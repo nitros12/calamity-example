@@ -171,6 +171,12 @@ main = do
         group "say" $ do
           command @'[KleeneConcat L.Text] "this" $ \ctx msg -> do
             void $ tellt ctx msg
+      command @'[User] "utest" $ \ctx u -> do
+        void $ tellt ctx $ "got user: " <> showtl u
+      command @'[Named "u" User, Named "u1" User] "utest2" $ \ctx u u1 -> do
+        void $ tellt ctx $ "got user: " <> showtl u <> "\nand: " <> showtl u1
+      command @'[Snowflake Emoji] "etest" $ \ctx e -> do
+        void $ tellt ctx $ "got emoji: " <> showtl e
       command @'[] "explode" $ \ctx -> do
         Just x <- pure Nothing
         debug "unreachable!"
@@ -196,6 +202,6 @@ main = do
     react @('CustomEvt "command-error" (CommandContext.Context, CommandError)) $ \(ctx, e) -> do
       info $ "Command failed with reason: " <> showt e
       case e of
-        ParseError t r -> void . tellt ctx $ "Failed to parse parameter: " <> L.fromStrict t <> ", with reason: ```\n" <> r <> "```"
+        ParseError n r -> void . tellt ctx $ "Failed to parse parameter: `" <> L.fromStrict n <> "`, with reason: ```\n" <> r <> "```"
     react @('CustomEvt "my-event" (L.Text, Message)) $ \(s, m) ->
       void $ tellt m ("Somebody told me to tell you about: " <> s)
