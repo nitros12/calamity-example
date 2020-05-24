@@ -55,7 +55,7 @@ extra-deps:
   - prometheus-2.1.3@sha256:4fdf8602f7c74367cda182cf71dab108f78a86993b428bf96b61dd6c519b6f22,4296
   # - calamity-0.1.8.0
   - github: nitros12/calamity
-    commit: e30c8c72b2e70492e8ae22329e2dc85f62892fb8
+    commit: 9ff1ca9fe560eda1154c8d6d7704f65efabe7a5e
 
 # Override default flag values for local packages and extra-deps
 # flags: {}
