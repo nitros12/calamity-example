@@ -22,7 +22,6 @@ import           Calamity
 import           Calamity.Cache.InMemory
 import           Calamity.Commands
 import qualified Calamity.Commands.Context                  as CommandContext
-import           Calamity.Commands.Error
 import           Calamity.Metrics.Eff
 import           Calamity.Metrics.Internal
 import           Calamity.Metrics.Noop
@@ -167,6 +166,12 @@ main = do
         info $ "something = " <> showt something <> ", aUser = " <> showt aUser
       command @'[] "hello" $ \ctx -> do
         void $ tellt ctx "heya"
+      command @'[Snowflake Member] "testupgrade" $ \ctx mid -> do
+        case (ctx ^. #guild) of
+          Just g -> do
+            Just m <- upgrade (getID @Guild g, mid)
+            void $ tellt ctx ("got member: " <> showtl m)
+          Nothing -> void $ tellt ctx "not in a guild"
       group "testgroup" $ do
         command @'[[L.Text]] "test" $ \ctx l -> do
           void $ tellt ctx ("you sent: " <> showtl l)
@@ -174,7 +179,7 @@ main = do
           val <- getCounter
           void $ tellt ctx ("The value is: " <> showtl val)
         group "say" $ do
-          command @'[KleeneConcat L.Text] "this" $ \ctx msg -> do
+          command @'[KleenePlusConcat L.Text] "this" $ \ctx msg -> do
             void $ tellt ctx msg
       command @'[Snowflake Emoji] "etest" $ \ctx e -> do
         void $ tellt ctx $ "got emoji: " <> showtl e
